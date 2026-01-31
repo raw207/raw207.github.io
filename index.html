@@ -49,6 +49,17 @@
     // fire torpedo
     if (e.key === " ") fireTorpedo();
   });
+    
+const stars = [];
+
+for (let i = 0; i < 100; i++) {
+  stars.push({
+    x: Math.random() * 512,
+    y: Math.random() * 512,
+    vx: (Math.random() - 0.5) * 0.05,
+    vy: (Math.random() - 0.5) * 0.05
+  });
+}
 
   document.addEventListener("keyup", e => keys[e.key] = false);
 
@@ -125,15 +136,21 @@
 
 
   function drawStars() {
-    for (let i = 0; i < 80; i++) {
-      ctx.fillRect(
-        Math.random() * 512,
-        Math.random() * 512,
-        1,
-        1
-      );
-    }
+  ctx.fillStyle = "white";
+  for (const s of stars) {
+    s.x += s.vx;
+    s.y += s.vy;
+
+    // wrap stars too
+    if (s.x < 0) s.x += 512;
+    if (s.x > 512) s.x -= 512;
+    if (s.y < 0) s.y += 512;
+    if (s.y > 512) s.y -= 512;
+
+    ctx.fillRect(s.x, s.y, 1, 1);
   }
+}
+
 
   function loop() {
     ctx.clearRect(0, 0, 512, 512);
