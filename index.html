@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>8-Bit Gravity Game</title>
+<title>Stable Ship & Asteroids</title>
 
 <style>
   body {
@@ -22,8 +22,8 @@
 </head>
 
 <body>
-<h1>8-Bit Gravity Test</h1>
-<p>Arrow keys: rotate / thrust</p>
+<h1>STABLE GAME CORE</h1>
+<p>Arrow keys to thrust</p>
 
 <canvas id="game" width="512" height="512"></canvas>
 
@@ -31,13 +31,13 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-/* ================== INPUT ================== */
+/* ========= INPUT ========= */
 
 const keys = {};
 addEventListener("keydown", e => keys[e.key] = true);
 addEventListener("keyup",   e => keys[e.key] = false);
 
-/* ================== HELPERS ================= */
+/* ========= HELPERS ========= */
 
 function wrap(o) {
   if (o.x < 0) o.x += 512;
@@ -46,28 +46,24 @@ function wrap(o) {
   if (o.y > 512) o.y -= 512;
 }
 
-function finite(n) {
+function ok(n) {
   return Number.isFinite(n);
 }
 
-/* ================== WORLD =================== */
+/* ========= WORLD ========= */
 
 const star = { x:256, y:256 };
 
 const ship = {
-  x: 100,
-  y: 100,
+  x: 120,
+  y: 120,
   vx: 0,
-  vy: 0,
-  angle: 0
+  vy: 0
 };
 
 const asteroids = [];
 for (let i = 0; i < 5; i++) {
   asteroids.push({
-    x: Math.random()*512,
-    y: Math.random()*512,
-    vx: (Math.random()-0.5)*1.2,
-    vy: (Math.random()-0.5)*1.2,
-    r: 18
-  })
+    x: Math.random() * 512,
+    y: Math.random() * 512,
+    vx: (Math.random() -
