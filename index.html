@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
-<title>Asteroids – Final Polished</title>
+<title>Asteroids – Final</title>
 
 <style>
   body {
@@ -77,7 +77,7 @@ function wrap(o, r = 0) {
 /* ASTEROID SHAPE */
 function generateAsteroidShape(size) {
   const points = [];
-  const verts = Math.floor(Math.random() * 5) + 7; // 7–11 points
+  const verts = Math.floor(Math.random() * 5) + 7;
   for (let i = 0; i < verts; i++) {
     const angle = (Math.PI * 2 / verts) * i;
     const radius = size * (0.6 + Math.random() * 0.5);
@@ -285,12 +285,12 @@ function loop() {
     ctx.fillRect(b.x - 2, b.y - 2, 4, 4);
   }
 
-  /* DRAW ASTEROIDS (JAGGED) */
-  ctx.strokeStyle = "gray";
+  /* DRAW ASTEROIDS (SOLID) */
   for (let a of asteroids) {
     ctx.save();
     ctx.translate(a.x, a.y);
     ctx.rotate(a.angle);
+
     ctx.beginPath();
     a.shape.forEach((p, i) => {
       const x = Math.cos(p.angle) * p.radius;
@@ -298,7 +298,12 @@ function loop() {
       i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
     });
     ctx.closePath();
+
+    ctx.fillStyle = "#777";
+    ctx.strokeStyle = "#aaa";
+    ctx.fill();
     ctx.stroke();
+
     ctx.restore();
   }
 
