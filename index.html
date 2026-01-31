@@ -145,4 +145,107 @@ function updateShip() {
   if (!alive) {
     respawnTimer--;
     if (respawnTimer <= 0) {
-      ship.x = 10
+      ship.x = 100;
+      ship.y = 100;
+      ship.vx = ship.vy = 0;
+      ship.angle = 0;
+      alive = true;
+    }
+    return;
+  }
+
+  if (keys["ArrowLeft"]) ship.angle -= 0.05;
+  if (keys["ArrowRight"]) ship.angle += 0.05;
+  if (keys["ArrowUp"]) {
+    ship.vx += Math.cos(ship.angle) * 0.1;
+    ship.vy += Math.sin(ship.angle) * 0.1;
+  }
+
+  applyGravity(ship);
+
+  ship.x += ship.vx;
+  ship.y += ship.vy;
+  wrap(ship);
+
+  const dx = ship.x - star.x;
+  const dy = ship.y - star.y;
+  if (Math.hypot(dx,dy) < star.radius) {
+    explode(ship.x,ship.y);
+    alive = false;
+    respawnTimer = 60;
+  }
+}
+
+/* ================== DRAWING ================== */
+
+function drawStars() {
+  ctx.fillStyle = "white";
+  for (const s of stars) {
+    s.x += s.vx;
+    s.y += s.vy;
+    wrap(s);
+    ctx.fillRect(s.x, s.y, 1, 1);
+  }
+}
+
+function drawStar() {
+  ctx.strokeStyle = "white";
+  ctx.beginPath();
+  ctx.arc(star.x, star.y, star.radius, 0, Math.PI*2);
+  ctx.stroke();
+}
+
+function drawShip() {
+  ctx.save();
+  ctx.translate(ship.x, ship.y);
+  ctx.rotate(ship.angle);
+  ctx.strokeStyle = "white";
+  ctx.beginPath();
+  ctx.moveTo(10, 0);
+  ctx.lineTo(-8, -6);
+  ctx.lineTo(-8, 6);
+  ctx.closePath();
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawTorpedoes() {
+  ctx.fillStyle = "white";
+  for (const t of torpedoes) {
+    ctx.fillRect(t.x, t.y, 2, 2);
+  }
+}
+
+function drawExplosions() {
+  ctx.strokeStyle = "white";
+  for (const e of explosions) {
+    ctx.beginPath();
+    ctx.moveTo(e.x, e.y);
+    ctx.lineTo(e.x - e.vx*2, e.y - e.vy*2);
+    ctx.stroke();
+  }
+}
+
+/* ================== LOOP ================== */
+
+function loop() {
+  ctx.clearRect(0,0,512,512);
+
+  drawStars();
+  drawStar();
+
+  updateShip();
+  updateTorpedoes();
+  updateExplosions();
+
+  if (alive) drawShip();
+  drawTorpedoes();
+  drawExplosions();
+
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
