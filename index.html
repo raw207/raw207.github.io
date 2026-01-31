@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 
-<!-- NO CACHE FOR TESTING -->
+<!-- Disable cache for GitHub Pages testing -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
@@ -37,14 +37,12 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-/* ================= INPUT ================= */
-
+/* ========= INPUT ========= */
 const keys = {};
 addEventListener("keydown", e => keys[e.key] = true);
 addEventListener("keyup", e => keys[e.key] = false);
 
-/* ================= HELPERS ================= */
-
+/* ========= HELPERS ========= */
 function wrap(o) {
   if (o.x < 0) o.x += 512;
   if (o.x > 512) o.x -= 512;
@@ -52,16 +50,11 @@ function wrap(o) {
   if (o.y > 512) o.y -= 512;
 }
 
-function ok(n) {
-  return Number.isFinite(n);
-}
-
-/* ================= GAME STATE ================= */
-
+/* ========= GAME STATE ========= */
 let score = 0;
 let lives = 3;
 
-const star = { x:256, y:256 };
+const star = { x: 256, y: 256 };
 
 const ship = {
   x: 256,
@@ -84,12 +77,11 @@ for (let i = 0; i < 6; i++) {
 
 const bullets = [];
 
-/* ================= GRAVITY (SAFE) ================= */
-
+/* ========= SAFE GRAVITY ========= */
 function gravity(o) {
   const dx = star.x - o.x;
   const dy = star.y - o.y;
-  const d = Math.hypot(dx, dy);
+  const d = Math.sqrt(dx*dx + dy*dy);
 
   if (d < 40 || d > 400) return;
 
@@ -98,6 +90,22 @@ function gravity(o) {
   o.vy += (dy / d) * force;
 }
 
-/* ================= MAIN LOOP ================= */
+/* ========= MAIN LOOP ========= */
+function loop() {
+  ctx.setTransform(1,0,0,1,0,0);
+  ctx.fillStyle = "black";
+  ctx.fillRect(0,0,512,512);
 
-function lo
+  /* HUD */
+  ctx.fillStyle = "white";
+  ctx.font = "14px monospace";
+  ctx.fillText("SCORE: " + score, 10, 20);
+  ctx.fillText("LIVES: " + lives, 420, 20);
+
+  /* INPUT */
+  if (keys["ArrowUp"])    ship.vy -= 0.15;
+  if (keys["ArrowDown"])  ship.vy += 0.15;
+  if (keys["ArrowLeft"])  ship.vx -= 0.15;
+  if (keys["ArrowRight"]) ship.vx += 0.15;
+
+  if (keys[" "] &&
