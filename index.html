@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Visible Game Baseline</title>
+<title>Space Game – Stable Gravity</title>
 
 <style>
   body {
@@ -22,8 +22,8 @@
 </head>
 
 <body>
-<h1>VISIBLE BASELINE</h1>
-<p>If you see shapes moving, rendering is fixed.</p>
+<h1>SPACE GAME (STABLE)</h1>
+<p>← → rotate · ↑ thrust · space = fire</p>
 
 <canvas id="game" width="512" height="512"></canvas>
 
@@ -31,46 +31,6 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-// VERY OBVIOUS OBJECTS
-let ship = { x: 256, y: 256, vx: 1.2, vy: 0.8 };
-let asteroid = { x: 100, y: 100, vx: 0.6, vy: 1.1 };
+/* ================= STATE ================= */
 
-function wrap(o) {
-  if (o.x < 0) o.x += 512;
-  if (o.x > 512) o.x -= 512;
-  if (o.y < 0) o.y += 512;
-  if (o.y > 512) o.y -= 512;
-}
-
-function loop() {
-  // solid background every frame
-  ctx.fillStyle = "black";
-  ctx.fillRect(0, 0, 512, 512);
-
-  // update
-  ship.x += ship.vx;
-  ship.y += ship.vy;
-  asteroid.x += asteroid.vx;
-  asteroid.y += asteroid.vy;
-
-  wrap(ship);
-  wrap(asteroid);
-
-  // ship (BIG + BRIGHT)
-  ctx.fillStyle = "cyan";
-  ctx.fillRect(ship.x - 10, ship.y - 10, 20, 20);
-
-  // asteroid (ORANGE CIRCLE)
-  ctx.strokeStyle = "orange";
-  ctx.lineWidth = 4;
-  ctx.beginPath();
-  ctx.arc(asteroid.x, asteroid.y, 20, 0, Math.PI * 2);
-  ctx.stroke();
-
-  requestAnimationFrame(loop);
-}
-
-loop();
-</script>
-</body>
-</html>
+const ship = { x:256, y:256, a:0, vx:0, vy
