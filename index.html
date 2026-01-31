@@ -3,12 +3,12 @@
 <head>
 <meta charset="UTF-8">
 
-<!-- No cache for testing -->
+<!-- No cache for GitHub Pages testing -->
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
-<title>Asteroids – Final</title>
+<title>Asteroids – Final Polished</title>
 
 <style>
   body {
@@ -43,15 +43,28 @@ addEventListener("keydown", e => keys[e.key] = true);
 addEventListener("keyup", e => keys[e.key] = false);
 
 /* CONSTANTS */
-const W = 512;
-const H = 512;
+const W = 512, H = 512;
 const GRAVITY = 0.03;
 const DAMPING = 0.995;
 
 /* GAME STATE */
-let ship, bullets, asteroids;
+let ship, bullets, asteroids, particles, stars;
 let dead = false;
 let resetTimer = 0;
+let score = 0;
+
+/* AUDIO (simple oscillator sounds) */
+const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+function beep(freq, time) {
+  const o = audioCtx.createOscillator();
+  const g = audioCtx.createGain();
+  o.frequency.value = freq;
+  o.connect(g);
+  g.connect(audioCtx.destination);
+  o.start();
+  g.gain.exponentialRampToValueAtTime(0.0001, audioCtx.currentTime + time);
+  o.stop(audioCtx.currentTime + time);
+}
 
 /* WRAP */
 function wrap(o, r = 0) {
@@ -64,10 +77,8 @@ function wrap(o, r = 0) {
 /* RESET */
 function resetGame() {
   ship = {
-    x: W / 2,
-    y: H / 2,
-    vx: 0,
-    vy: 0,
+    x: W / 2, y: H / 2,
+    vx: 0, vy: 0,
     angle: -Math.PI / 2,
     radius: 12,
     thrust: 0.15,
@@ -77,8 +88,19 @@ function resetGame() {
 
   bullets = [];
   asteroids = [];
-  for (let i = 0; i < 5; i++) spawnAsteroid(40);
+  particles = [];
+  stars = [];
 
+  for (let i = 0; i < 5; i++) spawnAsteroid(40);
+  for (let i = 0; i < 80; i++) {
+    stars.push({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      speed: Math.random() * 0.3 + 0.1
+    });
+  }
+
+  score = 0;
   dead = false;
 }
 
@@ -100,6 +122,19 @@ function spawnAsteroid(size, x, y) {
   });
 }
 
+/* EXPLOSIONS */
+function explode(x, y, count) {
+  for (let i = 0; i < count; i++) {
+    particles.push({
+      x, y,
+      vx: (Math.random() - 0.5) * 4,
+      vy: (Math.random() - 0.5) * 4,
+      life: Math.random() * 40 + 20
+    });
+  }
+}
+
+/* INIT */
 resetGame();
 
 /* LOOP */
@@ -108,6 +143,14 @@ function loop() {
   /* CLEAR */
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, W, H);
+
+  /* STARFIELD */
+  ctx.fillStyle = "white";
+  for (let s of stars) {
+    s.y += s.speed;
+    if (s.y > H) s.y = 0;
+    ctx.fillRect(s.x, s.y, 1, 1);
+  }
 
   /* DEBUG MARKER */
   ctx.fillStyle = "magenta";
@@ -139,6 +182,7 @@ function loop() {
         vy: Math.sin(ship.angle) * 6,
         life: 90
       });
+      beep(600, 0.05);
       ship.cooldown = 10;
     }
     ship.cooldown--;
@@ -168,6 +212,9 @@ function loop() {
       if (Math.hypot(b.x - a.x, b.y - a.y) < a.size) {
         bullets.splice(i, 1);
         asteroids.splice(j, 1);
+        explode(a.x, a.y, 20);
+        beep(200, 0.1);
+        score += 100;
 
         if (a.size > 30) {
           spawnAsteroid(a.size / 2, a.x, a.y);
@@ -184,6 +231,8 @@ function loop() {
       if (Math.hypot(ship.x - a.x, ship.y - a.y) < ship.radius + a.size) {
         dead = true;
         resetTimer = 60;
+        explode(ship.x, ship.y, 40);
+        beep(80, 0.3);
         break;
       }
     }
@@ -191,6 +240,16 @@ function loop() {
     resetTimer--;
     if (resetTimer <= 0) resetGame();
   }
+
+  /* PARTICLES */
+  ctx.fillStyle = "orange";
+  for (let p of particles) {
+    p.x += p.vx;
+    p.y += p.vy;
+    p.life--;
+    ctx.fillRect(p.x, p.y, 2, 2);
+  }
+  particles = particles.filter(p => p.life > 0);
 
   /* DRAW SHIP */
   if (!dead) {
@@ -221,6 +280,10 @@ function loop() {
     ctx.arc(a.x, a.y, a.size, 0, Math.PI * 2);
     ctx.stroke();
   }
+
+  /* SCORE */
+  ctx.fillStyle = "white";
+  ctx.fillText("SCORE: " + score, 20, 20);
 
   requestAnimationFrame(loop);
 }
