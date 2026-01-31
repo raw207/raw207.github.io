@@ -65,4 +65,17 @@ function loop() {
   if (keys["ArrowRight"]) ship.x += ship.speed;
 
   /* KEEP ON SCREEN */
-  ship.x = Math.max(10, Math.m
+  ship.x = Math.max(10, Math.min(502, ship.x));
+  ship.y = Math.max(10, Math.min(502, ship.y));
+
+  /* DRAW SHIP */
+  ctx.fillStyle = "cyan";
+  ctx.fillRect(ship.x - 10, ship.y - 10, 20, 20);
+
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
