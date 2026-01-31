@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Spacewar! (Public Domain Remake)</title>
+<title>Spacewar with Asteroids</title>
 
 <style>
   body {
@@ -22,7 +22,7 @@
 </head>
 
 <body>
-<h1>SPACEWAR!</h1>
+<h1>SPACEWAR+</h1>
 <p>← → rotate · ↑ thrust · space = fire</p>
 
 <canvas id="game" width="512" height="512"></canvas>
@@ -33,219 +33,44 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-ctx.strokeStyle = "white";
-ctx.fillStyle = "white";
-
 /* ================== GAME STATE ================== */
 
 const ship = { x:256, y:256, angle:0, vx:0, vy:0 };
-const star = { x:256, y:256, mass:1200, radius:12 };
+const star = { x:256, y:256, mass:300, radius:12 }; // REDUCED GRAVITY
 
 const torpedoes = [];
 const explosions = [];
 const stars = [];
+const asteroids = [];
 const keys = {};
 
 let alive = true;
 let respawnTimer = 0;
 
-/* ================== STARFIELD ================== */
+/* ================== BACKGROUND STARS ================== */
 
 for (let i = 0; i < 100; i++) {
   stars.push({
     x: Math.random() * 512,
     y: Math.random() * 512,
-    vx: (Math.random() - 0.5) * 0.15,
-    vy: (Math.random() - 0.5) * 0.15
+    vx: (Math.random() - 0.5) * 0.1,
+    vy: (Math.random() - 0.5) * 0.1
+  });
+}
+
+/* ================== ASTEROIDS ================== */
+
+for (let i = 0; i < 6; i++) {
+  asteroids.push({
+    x: Math.random() * 512,
+    y: Math.random() * 512,
+    vx: (Math.random() - 0.5) * 1.5,
+    vy: (Math.random() - 0.5) * 1.5,
+    r: 12 + Math.random() * 10
   });
 }
 
 /* ================== INPUT ================== */
 
 document.addEventListener("keydown", e => {
-  keys[e.key] = true;
-  if (e.key === " ") fireTorpedo();
-});
-
-document.addEventListener("keyup", e => {
-  keys[e.key] = false;
-});
-
-/* ================== HELPERS ================== */
-
-function wrap(o) {
-  if (o.x < 0) o.x += 512;
-  if (o.x > 512) o.x -= 512;
-  if (o.y < 0) o.y += 512;
-  if (o.y > 512) o.y -= 512;
-}
-
-function applyGravity(o) {
-  const dx = star.x - o.x;
-  const dy = star.y - o.y;
-  const d2 = dx*dx + dy*dy;
-  if (d2 < 100) return;
-  const f = star.mass / d2;
-  const d = Math.sqrt(d2);
-  o.vx += (dx/d) * f;
-  o.vy += (dy/d) * f;
-}
-
-/* ================== TORPEDOES ================== */
-
-function fireTorpedo() {
-  if (!alive) return;
-  torpedoes.push({
-    x: ship.x,
-    y: ship.y,
-    vx: Math.cos(ship.angle)*4 + ship.vx,
-    vy: Math.sin(ship.angle)*4 + ship.vy,
-    life: 60
-  });
-}
-
-function updateTorpedoes() {
-  for (let i = torpedoes.length - 1; i >= 0; i--) {
-    const t = torpedoes[i];
-    applyGravity(t);
-    t.x += t.vx;
-    t.y += t.vy;
-    t.life--;
-    wrap(t);
-    if (t.life <= 0) torpedoes.splice(i,1);
-  }
-}
-
-/* ================== EXPLOSIONS ================== */
-
-function explode(x,y) {
-  for (let i = 0; i < 20; i++) {
-    explosions.push({
-      x, y,
-      vx: (Math.random() - 0.5) * 4,
-      vy: (Math.random() - 0.5) * 4,
-      life: 30
-    });
-  }
-}
-
-function updateExplosions() {
-  for (let i = explosions.length - 1; i >= 0; i--) {
-    const e = explosions[i];
-    e.x += e.vx;
-    e.y += e.vy;
-    e.life--;
-    if (e.life <= 0) explosions.splice(i,1);
-  }
-}
-
-/* ================== SHIP ================== */
-
-function updateShip() {
-  if (!alive) {
-    respawnTimer--;
-    if (respawnTimer <= 0) {
-      ship.x = 100;
-      ship.y = 100;
-      ship.vx = ship.vy = 0;
-      ship.angle = 0;
-      alive = true;
-    }
-    return;
-  }
-
-  if (keys["ArrowLeft"]) ship.angle -= 0.05;
-  if (keys["ArrowRight"]) ship.angle += 0.05;
-  if (keys["ArrowUp"]) {
-    ship.vx += Math.cos(ship.angle) * 0.1;
-    ship.vy += Math.sin(ship.angle) * 0.1;
-  }
-
-  applyGravity(ship);
-
-  ship.x += ship.vx;
-  ship.y += ship.vy;
-  wrap(ship);
-
-  const dx = ship.x - star.x;
-  const dy = ship.y - star.y;
-  if (Math.hypot(dx,dy) < star.radius) {
-    explode(ship.x,ship.y);
-    alive = false;
-    respawnTimer = 60;
-  }
-}
-
-/* ================== DRAWING ================== */
-
-function drawStars() {
-  ctx.fillStyle = "white";
-  for (const s of stars) {
-    s.x += s.vx;
-    s.y += s.vy;
-    wrap(s);
-    ctx.fillRect(s.x, s.y, 1, 1);
-  }
-}
-
-function drawStar() {
-  ctx.strokeStyle = "white";
-  ctx.beginPath();
-  ctx.arc(star.x, star.y, star.radius, 0, Math.PI*2);
-  ctx.stroke();
-}
-
-function drawShip() {
-  ctx.save();
-  ctx.translate(ship.x, ship.y);
-  ctx.rotate(ship.angle);
-  ctx.strokeStyle = "white";
-  ctx.beginPath();
-  ctx.moveTo(10, 0);
-  ctx.lineTo(-8, -6);
-  ctx.lineTo(-8, 6);
-  ctx.closePath();
-  ctx.stroke();
-  ctx.restore();
-}
-
-function drawTorpedoes() {
-  ctx.fillStyle = "white";
-  for (const t of torpedoes) {
-    ctx.fillRect(t.x, t.y, 2, 2);
-  }
-}
-
-function drawExplosions() {
-  ctx.strokeStyle = "white";
-  for (const e of explosions) {
-    ctx.beginPath();
-    ctx.moveTo(e.x, e.y);
-    ctx.lineTo(e.x - e.vx*2, e.y - e.vy*2);
-    ctx.stroke();
-  }
-}
-
-/* ================== LOOP ================== */
-
-function loop() {
-  ctx.clearRect(0,0,512,512);
-
-  drawStars();
-  drawStar();
-
-  updateShip();
-  updateTorpedoes();
-  updateExplosions();
-
-  if (alive) drawShip();
-  drawTorpedoes();
-  drawExplosions();
-
-  requestAnimationFrame(loop);
-}
-
-loop();
-</script>
-</body>
-</html>
+  keys[e.key]()
