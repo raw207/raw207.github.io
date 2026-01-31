@@ -117,10 +117,12 @@
 
 
   function drawTorpedoes() {
-    for (const t of torpedoes) {
-      ctx.fillRect(t.x, t.y, 2, 2);
-    }
+  ctx.fillStyle = "white";   // 👈 FIX
+  for (const t of torpedoes) {
+    ctx.fillRect(t.x, t.y, 2, 2);
   }
+}
+
 
   function drawStars() {
     for (let i = 0; i < 80; i++) {
