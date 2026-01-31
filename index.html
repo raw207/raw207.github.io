@@ -61,6 +61,13 @@ for (let i = 0; i < 100; i++) {
   });
 }
 
+    const star = {
+  x: 256,
+  y: 256,
+  mass: 1200,
+  radius: 12
+};
+
   document.addEventListener("keyup", e => keys[e.key] = false);
 
   function fireTorpedo() {
@@ -81,9 +88,18 @@ for (let i = 0; i < 100; i++) {
       ship.vx += Math.cos(ship.angle) * 0.1;
       ship.vy += Math.sin(ship.angle) * 0.1;
     }
+    
+applyGravity(ship);
 
     ship.x += ship.vx;
     ship.y += ship.vy;
+    
+if (distance(ship, star) < star.radius) {
+  ship.x = 100;
+  ship.y = 100;
+  ship.vx = 0;
+  ship.vy = 0;
+}
 
     wrap(ship);
   }
@@ -91,6 +107,7 @@ for (let i = 0; i < 100; i++) {
   function updateTorpedoes() {
     for (let i = torpedoes.length - 1; i >= 0; i--) {
       const t = torpedoes[i];
+      applyGravity(t);
       t.x += t.vx;
       t.y += t.vy;
       t.life--;
@@ -155,12 +172,39 @@ for (let i = 0; i < 100; i++) {
   function loop() {
     ctx.clearRect(0, 0, 512, 512);
     drawStars();
+    drawStar(); 
     updateShip();
     updateTorpedoes();
     drawShip();
     drawTorpedoes();
     requestAnimationFrame(loop);
   }
+    
+function applyGravity(obj) {
+  const dx = star.x - obj.x;
+  const dy = star.y - obj.y;
+  const distSq = dx * dx + dy * dy;
+
+  // prevent extreme forces
+  if (distSq < 50) return;
+
+  const force = star.mass / distSq;
+  const dist = Math.sqrt(distSq);
+
+  obj.vx += (dx / dist) * force;
+  obj.vy += (dy / dist) * force;
+}
+    
+function drawStar() {
+  ctx.beginPath();
+  ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
+  ctx.strokeStyle = "white";
+  ctx.stroke();
+}
+    
+function distance(a, b) {
+  return Math.hypot(a.x - b.x, a.y - b.y);
+}
 
   loop();
 </script>
