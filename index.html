@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
-<title>Layer 6 – Asteroid Splitting</title>
+<title>Layer 7 – Screen Wrap</title>
 
 <style>
   body {
@@ -28,7 +28,7 @@
 </head>
 
 <body>
-<h1>Layer 6: Asteroid Splitting</h1>
+<h1>Layer 7: Screen Wrap</h1>
 <p>↑ thrust · ← → rotate · Space fire</p>
 
 <canvas id="game" width="512" height="512"></canvas>
@@ -45,21 +45,29 @@ addEventListener("keyup", e => keys[e.key] = false);
 /* CONSTANTS */
 const GRAVITY = 0.03;
 const DAMPING = 0.995;
+const W = 512;
+const H = 512;
 
 /* GAME STATE */
 let dead = false;
 let resetTimer = 0;
 
-/* SHIP / ENTITIES */
-let ship;
-let bullets;
-let asteroids;
+/* ENTITIES */
+let ship, bullets, asteroids;
+
+/* WRAP FUNCTION */
+function wrap(obj, r = 0) {
+  if (obj.x < -r) obj.x = W + r;
+  if (obj.x > W + r) obj.x = -r;
+  if (obj.y < -r) obj.y = H + r;
+  if (obj.y > H + r) obj.y = -r;
+}
 
 /* RESET */
 function resetGame() {
   ship = {
-    x: 256,
-    y: 256,
+    x: W / 2,
+    y: H / 2,
     vx: 0,
     vy: 0,
     angle: -Math.PI / 2,
@@ -78,13 +86,12 @@ function resetGame() {
 
 /* ASTEROID SPAWN */
 function spawnAsteroid(size, x, y) {
-  const edge = Math.floor(Math.random() * 4);
-
   if (x === undefined) {
-    if (edge === 0) { x = 0; y = Math.random() * 512; }
-    if (edge === 1) { x = 512; y = Math.random() * 512; }
-    if (edge === 2) { x = Math.random() * 512; y = 0; }
-    if (edge === 3) { x = Math.random() * 512; y = 512; }
+    const edge = Math.floor(Math.random() * 4);
+    if (edge === 0) { x = 0; y = Math.random() * H; }
+    if (edge === 1) { x = W; y = Math.random() * H; }
+    if (edge === 2) { x = Math.random() * W; y = 0; }
+    if (edge === 3) { x = Math.random() * W; y = H; }
   }
 
   asteroids.push({
@@ -103,7 +110,7 @@ function loop() {
 
   /* CLEAR */
   ctx.fillStyle = "black";
-  ctx.fillRect(0, 0, 512, 512);
+  ctx.fillRect(0, 0, W, H);
 
   /* DEBUG */
   ctx.fillStyle = "magenta";
@@ -111,7 +118,7 @@ function loop() {
 
   if (!dead) {
 
-    /* ROTATE */
+    /* ROTATION */
     if (keys["ArrowLeft"]) ship.angle -= ship.rotationSpeed;
     if (keys["ArrowRight"]) ship.angle += ship.rotationSpeed;
 
@@ -121,13 +128,14 @@ function loop() {
       ship.vy += Math.sin(ship.angle) * ship.thrust;
     }
 
+    /* PHYSICS */
     ship.vy += GRAVITY;
-
     ship.vx *= DAMPING;
     ship.vy *= DAMPING;
 
     ship.x += ship.vx;
     ship.y += ship.vy;
+    wrap(ship, ship.radius);
 
     /* FIRE */
     if (keys[" "] && ship.cooldown <= 0) {
@@ -136,14 +144,11 @@ function loop() {
         y: ship.y,
         vx: Math.cos(ship.angle) * 6,
         vy: Math.sin(ship.angle) * 6,
-        life: 60
+        life: 90
       });
       ship.cooldown = 10;
     }
     ship.cooldown--;
-
-    ship.x = Math.max(10, Math.min(502, ship.x));
-    ship.y = Math.max(10, Math.min(502, ship.y));
   }
 
   /* BULLETS */
@@ -151,6 +156,7 @@ function loop() {
     b.x += b.vx;
     b.y += b.vy;
     b.life--;
+    wrap(b, 2);
   }
   bullets = bullets.filter(b => b.life > 0);
 
@@ -158,11 +164,7 @@ function loop() {
   for (let a of asteroids) {
     a.x += a.vx;
     a.y += a.vy;
-
-    if (a.x < -a.size) a.x = 512 + a.size;
-    if (a.x > 512 + a.size) a.x = -a.size;
-    if (a.y < -a.size) a.y = 512 + a.size;
-    if (a.y > 512 + a.size) a.y = -a.size;
+    wrap(a, a.size);
   }
 
   /* BULLET ↔ ASTEROID */
@@ -170,7 +172,6 @@ function loop() {
     for (let j = asteroids.length - 1; j >= 0; j--) {
       const b = bullets[i];
       const a = asteroids[j];
-
       if (Math.hypot(b.x - a.x, b.y - a.y) < a.size) {
         bullets.splice(i, 1);
         asteroids.splice(j, 1);
@@ -182,7 +183,6 @@ function loop() {
           spawnAsteroid(a.size / 1.5, a.x, a.y);
           spawnAsteroid(a.size / 1.5, a.x, a.y);
         }
-
         break;
       }
     }
