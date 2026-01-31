@@ -29,81 +29,120 @@
   <canvas id="game" width="512" height="512"></canvas>
 
   <script>
-    const canvas = document.getElementById("game");
-    const ctx = canvas.getContext("2d");
+  const canvas = document.getElementById("game");
+  const ctx = canvas.getContext("2d");
 
-    const ship = {
-      x: 256,
-      y: 256,
-      angle: 0,
-      vx: 0,
-      vy: 0
-    };
+  const ship = {
+    x: 256,
+    y: 256,
+    angle: 0,
+    vx: 0,
+    vy: 0
+  };
 
-    const keys = {};
+  const keys = {};
+  const torpedoes = [];
 
-    document.addEventListener("keydown", e => keys[e.key] = true);
-    document.addEventListener("keyup", e => keys[e.key] = false);
+  document.addEventListener("keydown", e => {
+    keys[e.key] = true;
 
-    function update() {
-      // rotation
-      if (keys["ArrowLeft"]) ship.angle -= 0.05;
-      if (keys["ArrowRight"]) ship.angle += 0.05;
+    // fire torpedo
+    if (e.key === " ") fireTorpedo();
+  });
 
-      // thrust
-      if (keys["ArrowUp"]) {
-        ship.vx += Math.cos(ship.angle) * 0.1;
-        ship.vy += Math.sin(ship.angle) * 0.1;
-      }
+  document.addEventListener("keyup", e => keys[e.key] = false);
 
-      // movement
-      ship.x += ship.vx;
-      ship.y += ship.vy;
+  function fireTorpedo() {
+    torpedoes.push({
+      x: ship.x,
+      y: ship.y,
+      vx: Math.cos(ship.angle) * 4 + ship.vx,
+      vy: Math.sin(ship.angle) * 4 + ship.vy,
+      life: 60
+    });
+  }
 
-      // screen wrap
-      if (ship.x < 0) ship.x += 512;
-      if (ship.x > 512) ship.x -= 512;
-      if (ship.y < 0) ship.y += 512;
-      if (ship.y > 512) ship.y -= 512;
+  function updateShip() {
+    if (keys["ArrowLeft"]) ship.angle -= 0.05;
+    if (keys["ArrowRight"]) ship.angle += 0.05;
+
+    if (keys["ArrowUp"]) {
+      ship.vx += Math.cos(ship.angle) * 0.1;
+      ship.vy += Math.sin(ship.angle) * 0.1;
     }
 
-    function drawShip() {
-      ctx.save();
-      ctx.translate(ship.x, ship.y);
-      ctx.rotate(ship.angle);
+    ship.x += ship.vx;
+    ship.y += ship.vy;
 
-      ctx.beginPath();
-      ctx.moveTo(10, 0);
-      ctx.lineTo(-8, -6);
-      ctx.lineTo(-8, 6);
-      ctx.closePath();
+    wrap(ship);
+  }
 
-      ctx.strokeStyle = "white";
-      ctx.stroke();
+  function updateTorpedoes() {
+    for (let i = torpedoes.length - 1; i >= 0; i--) {
+      const t = torpedoes[i];
+      t.x += t.vx;
+      t.y += t.vy;
+      t.life--;
 
-      ctx.restore();
-    }
+      wrap(t);
 
-    function drawStars() {
-      for (let i = 0; i < 100; i++) {
-        ctx.fillRect(
-          Math.random() * 512,
-          Math.random() * 512,
-          1,
-          1
-        );
+      if (t.life <= 0) {
+        torpedoes.splice(i, 1);
       }
     }
+  }
 
-    function loop() {
-      ctx.clearRect(0, 0, 512, 512);
-      drawStars();
-      update();
-      drawShip();
-      requestAnimationFrame(loop);
+  function wrap(obj) {
+    if (obj.x < 0) obj.x += 512;
+    if (obj.x > 512) obj.x -= 512;
+    if (obj.y < 0) obj.y += 512;
+    if (obj.y > 512) obj.y -= 512;
+  }
+
+  function drawShip() {
+    ctx.save();
+    ctx.translate(ship.x, ship.y);
+    ctx.rotate(ship.angle);
+
+    ctx.beginPath();
+    ctx.moveTo(10, 0);
+    ctx.lineTo(-8, -6);
+    ctx.lineTo(-8, 6);
+    ctx.closePath();
+    ctx.stroke();
+
+    ctx.restore();
+  }
+
+  function drawTorpedoes() {
+    for (const t of torpedoes) {
+      ctx.fillRect(t.x, t.y, 2, 2);
     }
+  }
 
-    loop();
-  </script>
+  function drawStars() {
+    for (let i = 0; i < 80; i++) {
+      ctx.fillRect(
+        Math.random() * 512,
+        Math.random() * 512,
+        1,
+        1
+      );
+    }
+  }
+
+  function loop() {
+    ctx.clearRect(0, 0, 512, 512);
+    drawStars();
+    updateShip();
+    updateTorpedoes();
+    drawShip();
+    drawTorpedoes();
+    requestAnimationFrame(loop);
+  }
+
+  loop();
+</script>
+
 </body>
 </html>
