@@ -8,7 +8,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
 
-<title>Layer 3 – Asteroids</title>
+<title>Layer 4 – Bullet Collisions</title>
 
 <style>
   body {
@@ -28,7 +28,7 @@
 </head>
 
 <body>
-<h1>Layer 3: Asteroids</h1>
+<h1>Layer 4: Bullet ↔ Asteroid Collisions</h1>
 <p>Arrow keys move · Space fires</p>
 
 <canvas id="game" width="512" height="512"></canvas>
@@ -57,7 +57,6 @@ const bullets = [];
 const asteroids = [];
 const ASTEROID_COUNT = 6;
 
-/* SPAWN ASTEROIDS */
 function spawnAsteroid() {
   const edge = Math.floor(Math.random() * 4);
   let x, y;
@@ -76,10 +75,7 @@ function spawnAsteroid() {
   });
 }
 
-/* INITIAL ASTEROIDS */
-for (let i = 0; i < ASTEROID_COUNT; i++) {
-  spawnAsteroid();
-}
+for (let i = 0; i < ASTEROID_COUNT; i++) spawnAsteroid();
 
 /* LOOP */
 function loop() {
@@ -88,7 +84,7 @@ function loop() {
   ctx.fillStyle = "black";
   ctx.fillRect(0, 0, 512, 512);
 
-  /* DEBUG MARKER */
+  /* DEBUG */
   ctx.fillStyle = "magenta";
   ctx.fillRect(4, 4, 8, 8);
 
@@ -104,7 +100,6 @@ function loop() {
   }
   ship.cooldown--;
 
-  /* CLAMP SHIP */
   ship.x = Math.max(10, Math.min(502, ship.x));
   ship.y = Math.max(10, Math.min(502, ship.y));
 
@@ -112,9 +107,6 @@ function loop() {
   for (let b of bullets) {
     b.y += b.vy;
     b.life--;
-  }
-  for (let i = bullets.length - 1; i >= 0; i--) {
-    if (bullets[i].life <= 0) bullets.splice(i, 1);
   }
 
   /* UPDATE ASTEROIDS */
@@ -126,6 +118,29 @@ function loop() {
     if (a.x > 512 + a.size) a.x = -a.size;
     if (a.y < -a.size) a.y = 512 + a.size;
     if (a.y > 512 + a.size) a.y = -a.size;
+  }
+
+  /* COLLISIONS */
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    for (let j = asteroids.length - 1; j >= 0; j--) {
+      const b = bullets[i];
+      const a = asteroids[j];
+      const dx = b.x - a.x;
+      const dy = b.y - a.y;
+      const dist = Math.sqrt(dx*dx + dy*dy);
+
+      if (dist < a.size) {
+        bullets.splice(i, 1);
+        asteroids.splice(j, 1);
+        spawnAsteroid();
+        break;
+      }
+    }
+  }
+
+  /* CLEAN BULLETS */
+  for (let i = bullets.length - 1; i >= 0; i--) {
+    if (bullets[i].life <= 0) bullets.splice(i, 1);
   }
 
   /* DRAW SHIP */
