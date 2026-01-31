@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
 <meta charset="UTF-8">
-<title>Spacewar – Visible Version</title>
+<title>Visible Game Baseline</title>
 
 <style>
   body {
@@ -15,15 +15,15 @@
   canvas {
     display: block;
     margin: 20px auto;
-    border: 3px solid white;
+    border: 4px solid white;
     background: black;
   }
 </style>
 </head>
 
 <body>
-<h1>SPACEWAR (VISIBLE)</h1>
-<p>← → rotate · ↑ thrust · space = fire</p>
+<h1>VISIBLE BASELINE</h1>
+<p>If you see shapes moving, rendering is fixed.</p>
 
 <canvas id="game" width="512" height="512"></canvas>
 
@@ -31,49 +31,46 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-/* ================= STATE ================= */
+// VERY OBVIOUS OBJECTS
+let ship = { x: 256, y: 256, vx: 1.2, vy: 0.8 };
+let asteroid = { x: 100, y: 100, vx: 0.6, vy: 1.1 };
 
-const ship = { x:256, y:256, a:0, vx:0, vy:0 };
-const star = { x:256, y:256, mass:120, r:16 };
-
-const bullets = [];
-const asteroids = [];
-const bgStars = [];
-const keys = {};
-
-let alive = true;
-
-/* ================= SETUP ================= */
-
-for (let i=0;i<80;i++) {
-  bgStars.push({
-    x:Math.random()*512,
-    y:Math.random()*512,
-    vx:(Math.random()-0.5)*0.05,
-    vy:(Math.random()-0.5)*0.05
-  });
+function wrap(o) {
+  if (o.x < 0) o.x += 512;
+  if (o.x > 512) o.x -= 512;
+  if (o.y < 0) o.y += 512;
+  if (o.y > 512) o.y -= 512;
 }
 
-for (let i=0;i<5;i++) {
-  asteroids.push({
-    x:Math.random()*512,
-    y:Math.random()*512,
-    vx:(Math.random()-0.5)*1,
-    vy:(Math.random()-0.5)*1,
-    r:18
-  });
+function loop() {
+  // solid background every frame
+  ctx.fillStyle = "black";
+  ctx.fillRect(0, 0, 512, 512);
+
+  // update
+  ship.x += ship.vx;
+  ship.y += ship.vy;
+  asteroid.x += asteroid.vx;
+  asteroid.y += asteroid.vy;
+
+  wrap(ship);
+  wrap(asteroid);
+
+  // ship (BIG + BRIGHT)
+  ctx.fillStyle = "cyan";
+  ctx.fillRect(ship.x - 10, ship.y - 10, 20, 20);
+
+  // asteroid (ORANGE CIRCLE)
+  ctx.strokeStyle = "orange";
+  ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.arc(asteroid.x, asteroid.y, 20, 0, Math.PI * 2);
+  ctx.stroke();
+
+  requestAnimationFrame(loop);
 }
 
-/* ================= INPUT ================= */
-
-addEventListener("keydown", e=>{
-  keys[e.key]=true;
-  if (e.key===" ") fire();
-});
-addEventListener("keyup", e=>keys[e.key]=false);
-
-/* ================= HELPERS ================= */
-
-function wrap(o){
-  if(o.x<0)o.x+=512;
-  if(o.x>
+loop();
+</script>
+</body>
+</html>
