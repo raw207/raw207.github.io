@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<title>Spacewar with Asteroids</title>
+<title>Spacewar + Asteroids</title>
 
 <style>
   body {
@@ -16,61 +16,30 @@
     display: block;
     margin: 20px auto;
     border: 2px solid white;
+    background: black;
     image-rendering: pixelated;
   }
 </style>
 </head>
 
 <body>
-<h1>SPACEWAR+</h1>
+<h1>SPACEWAR + ASTEROIDS</h1>
 <p>← → rotate · ↑ thrust · space = fire</p>
 
 <canvas id="game" width="512" height="512"></canvas>
 
 <script>
-/* ================== SETUP ================== */
+/* ================= SETUP ================= */
 
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-/* ================== GAME STATE ================== */
+/* ================= STATE ================= */
 
 const ship = { x:256, y:256, angle:0, vx:0, vy:0 };
-const star = { x:256, y:256, mass:300, radius:12 }; // REDUCED GRAVITY
+const star = { x:256, y:256, mass:200, radius:12 }; // LOW GRAVITY
 
 const torpedoes = [];
 const explosions = [];
-const stars = [];
-const asteroids = [];
-const keys = {};
-
-let alive = true;
-let respawnTimer = 0;
-
-/* ================== BACKGROUND STARS ================== */
-
-for (let i = 0; i < 100; i++) {
-  stars.push({
-    x: Math.random() * 512,
-    y: Math.random() * 512,
-    vx: (Math.random() - 0.5) * 0.1,
-    vy: (Math.random() - 0.5) * 0.1
-  });
-}
-
-/* ================== ASTEROIDS ================== */
-
-for (let i = 0; i < 6; i++) {
-  asteroids.push({
-    x: Math.random() * 512,
-    y: Math.random() * 512,
-    vx: (Math.random() - 0.5) * 1.5,
-    vy: (Math.random() - 0.5) * 1.5,
-    r: 12 + Math.random() * 10
-  });
-}
-
-/* ================== INPUT ================== */
-
-document.addEventListener("keydown", e => {
-  keys[e.key]()
+const bgStars = [];
+const aste
