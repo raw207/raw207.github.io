@@ -1,7 +1,13 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
 <head>
 <meta charset="UTF-8">
+
+<!-- NO CACHE FOR TESTING -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
+
 <title>8-Bit Gravity Shooter</title>
 
 <style>
@@ -23,7 +29,7 @@
 
 <body>
 <h1>8-Bit Gravity Shooter</h1>
-<p>Arrow keys move · Space fires</p>
+<p>Arrow keys = thrust · Space = fire</p>
 
 <canvas id="game" width="512" height="512"></canvas>
 
@@ -31,13 +37,13 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-/* ===== INPUT ===== */
+/* ================= INPUT ================= */
 
 const keys = {};
 addEventListener("keydown", e => keys[e.key] = true);
-addEventListener("keyup",   e => keys[e.key] = false);
+addEventListener("keyup", e => keys[e.key] = false);
 
-/* ===== HELPERS ===== */
+/* ================= HELPERS ================= */
 
 function wrap(o) {
   if (o.x < 0) o.x += 512;
@@ -50,7 +56,10 @@ function ok(n) {
   return Number.isFinite(n);
 }
 
-/* ===== WORLD ===== */
+/* ================= GAME STATE ================= */
+
+let score = 0;
+let lives = 3;
 
 const star = { x:256, y:256 };
 
@@ -75,7 +84,7 @@ for (let i = 0; i < 6; i++) {
 
 const bullets = [];
 
-/* ===== SAFE GRAVITY ===== */
+/* ================= GRAVITY (SAFE) ================= */
 
 function gravity(o) {
   const dx = star.x - o.x;
@@ -89,94 +98,6 @@ function gravity(o) {
   o.vy += (dy / d) * force;
 }
 
-/* ===== LOOP ===== */
+/* ================= MAIN LOOP ================= */
 
-function loop() {
-  ctx.setTransform(1,0,0,1,0,0);
-
-  ctx.fillStyle = "black";
-  ctx.fillRect(0,0,512,512);
-
-  ctx.fillStyle = "red";
-  ctx.font = "14px monospace";
-  ctx.fillText("BULLETS (NO COLLISIONS YET)", 10, 18);
-
-  /* INPUT */
-  if (keys["ArrowUp"])    ship.vy -= 0.15;
-  if (keys["ArrowDown"])  ship.vy += 0.15;
-  if (keys["ArrowLeft"])  ship.vx -= 0.15;
-  if (keys["ArrowRight"]) ship.vx += 0.15;
-
-  if (keys[" "] && ship.cooldown <= 0) {
-    bullets.push({
-      x: ship.x,
-      y: ship.y,
-      vx: 0,
-      vy: -6,
-      life: 60
-    });
-    ship.cooldown = 12;
-  }
-
-  ship.cooldown--;
-
-  /* PHYSICS */
-  gravity(ship);
-  ship.x += ship.vx;
-  ship.y += ship.vy;
-  wrap(ship);
-
-  for (const a of asteroids) {
-    gravity(a);
-    a.x += a.vx;
-    a.y += a.vy;
-    wrap(a);
-  }
-
-  for (const b of bullets) {
-    b.x += b.vx;
-    b.y += b.vy;
-    b.life--;
-  }
-
-  // Remove dead bullets (SAFE loop)
-  for (let i = bullets.length - 1; i >= 0; i--) {
-    if (bullets[i].life <= 0) bullets.splice(i, 1);
-  }
-
-  if (!ok(ship.x) || !ok(ship.y)) {
-    ctx.fillStyle = "yellow";
-    ctx.fillText("PHYSICS ERROR", 180, 260);
-    return;
-  }
-
-  /* DRAW */
-
-  ctx.fillStyle = "yellow";
-  ctx.beginPath();
-  ctx.arc(star.x, star.y, 20, 0, Math.PI * 2);
-  ctx.fill();
-
-  ctx.fillStyle = "cyan";
-  ctx.fillRect(ship.x - 10, ship.y - 10, 20, 20);
-
-  ctx.strokeStyle = "orange";
-  ctx.lineWidth = 3;
-  for (const a of asteroids) {
-    ctx.beginPath();
-    ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
-    ctx.stroke();
-  }
-
-  ctx.fillStyle = "white";
-  for (const b of bullets) {
-    ctx.fillRect(b.x - 2, b.y - 4, 4, 8);
-  }
-
-  requestAnimationFrame(loop);
-}
-
-loop();
-</script>
-</body>
-</html>
+function lo
