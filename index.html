@@ -127,4 +127,42 @@ function loop() {
     }
 
     for (let i=bullets.length-1;i>=0;i--) {
-      if (bullets[i].life <= 0) bullets.splice(
+      if (bullets[i].life <= 0) bullets.splice(i,1);
+    }
+
+    /* DRAW WORLD */
+    ctx.fillStyle = "yellow";
+    ctx.beginPath();
+    ctx.arc(star.x, star.y, 20, 0, Math.PI*2);
+    ctx.fill();
+
+    ctx.fillStyle = "cyan";
+    ctx.fillRect(ship.x-10, ship.y-10, 20, 20);
+
+    ctx.strokeStyle = "orange";
+    ctx.lineWidth = 3;
+    for (let a of asteroids) {
+      ctx.beginPath();
+      ctx.arc(a.x, a.y, a.r, 0, Math.PI*2);
+      ctx.stroke();
+    }
+
+    ctx.fillStyle = "white";
+    for (let b of bullets) {
+      ctx.fillRect(b.x-2, b.y-4, 4, 8);
+    }
+
+  } catch (e) {
+    ctx.fillStyle = "red";
+    ctx.font = "14px monospace";
+    ctx.fillText("JS ERROR – CHECK CONSOLE", 120, 256);
+    console.error(e);
+  }
+
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
