@@ -1,36 +1,8 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <title>Spacewar! (Public Domain Remake)</title>
-
-  <style>
-    body {
-      margin: 0;
-      background: black;
-      color: white;
-      font-family: monospace;
-      text-align: center;
-    }
-
-    canvas {
-      display: block;
-      margin: 20px auto;
-      border: 2px solid white;
-      image-rendering: pixelated;
-    }
-  </style>
-</head>
-
-<body>
-  <h1>SPACEWAR!</h1>
-  <p>← → rotate · ↑ thrust</p>
-
-  <canvas id="game" width="512" height="512"></canvas>
-
-  <script>
+<script>
   const canvas = document.getElementById("game");
   const ctx = canvas.getContext("2d");
+
+  /* ---------- GAME OBJECTS ---------- */
 
   const ship = {
     x: 256,
@@ -40,84 +12,55 @@
     vy: 0
   };
 
+  const star = {
+    x: 256,
+    y: 256,
+    mass: 1200,
+    radius: 12
+  };
+
   const keys = {};
   const torpedoes = [];
+  const explosions = [];
+  const stars = [];
 
-  document.addEventListener("keydown", e => {
-    keys[e.key] = true;
+  let alive = true;
+  let respawnTimer = 0;
 
-    // fire torpedo
-    if (e.key === " ") fireTorpedo();
-  });
-    
-const stars = [];
+  /* ---------- STARFIELD ---------- */
 
-for (let i = 0; i < 100; i++) {
-  stars.push({
-    x: Math.random() * 512,
-    y: Math.random() * 512,
-    vx: (Math.random() - 0.5) * 0.15,
-    vy: (Math.random() - 0.5) * 0.15
-  });
-}
-
-    const star = {
-  x: 256,
-  y: 256,
-  mass: 1200,
-  radius: 12
-};
-
-  document.addEventListener("keyup", e => keys[e.key] = false);
-
-  function fireTorpedo() {
-    torpedoes.push({
-      x: ship.x,
-      y: ship.y,
-      vx: Math.cos(ship.angle) * 4 + ship.vx,
-      vy: Math.sin(ship.angle) * 4 + ship.vy,
-      life: 60
+  for (let i = 0; i < 100; i++) {
+    stars.push({
+      x: Math.random() * 512,
+      y: Math.random() * 512,
+      vx: (Math.random() - 0.5) * 0.15,
+      vy: (Math.random() - 0.5) * 0.15
     });
   }
 
-  function updateShip() {
-    if (keys["ArrowLeft"]) ship.angle -= 0.05;
-    if (keys["ArrowRight"]) ship.angle += 0.05;
+  /* ---------- INPUT ---------- */
 
-    if (keys["ArrowUp"]) {
-      ship.vx += Math.cos(ship.angle) * 0.1;
-      ship.vy += Math.sin(ship.angle) * 0.1;
-    }
-    
-applyGravity(ship);
+  document.addEventListener("keydown", e => {
+    keys[e.key] = true;
+    if (e.key === " ") fireTorpedo();
+  });
 
-    ship.x += ship.vx;
-    ship.y += ship.vy;
-    
-if (distance(ship, star) < star.radius) {
-  ship.x = 100;
-  ship.y = 100;
-  ship.vx = 0;
-  ship.vy = 0;
-}
+  document.addEventListener("keyup", e => keys[e.key] = false);
 
-    wrap(ship);
-  }
+  /* ---------- PHYSICS ---------- */
 
-  function updateTorpedoes() {
-    for (let i = torpedoes.length - 1; i >= 0; i--) {
-      const t = torpedoes[i];
-      applyGravity(t);
-      t.x += t.vx;
-      t.y += t.vy;
-      t.life--;
+  function applyGravity(obj) {
+    const dx = star.x - obj.x;
+    const dy = star.y - obj.y;
+    const distSq = dx * dx + dy * dy;
 
-      wrap(t);
+    if (distSq < 50) return;
 
-      if (t.life <= 0) {
-        torpedoes.splice(i, 1);
-      }
-    }
+    const force = star.mass / distSq;
+    const dist = Math.sqrt(distSq);
+
+    obj.vx += (dx / dist) * force;
+    obj.vy += (dy / dist) * force;
   }
 
   function wrap(obj) {
@@ -127,87 +70,5 @@ if (distance(ship, star) < star.radius) {
     if (obj.y > 512) obj.y -= 512;
   }
 
- function drawShip() {
-  ctx.save();
-  ctx.translate(ship.x, ship.y);
-  ctx.rotate(ship.angle);
-
-  ctx.strokeStyle = "white";   // 👈 FIX
-  ctx.beginPath();
-  ctx.moveTo(10, 0);
-  ctx.lineTo(-8, -6);
-  ctx.lineTo(-8, 6);
-  ctx.closePath();
-  ctx.stroke();
-
-  ctx.restore();
-}
-
-
-  function drawTorpedoes() {
-  ctx.fillStyle = "white";   // 👈 FIX
-  for (const t of torpedoes) {
-    ctx.fillRect(t.x, t.y, 2, 2);
-  }
-}
-
-
-  function drawStars() {
-  ctx.fillStyle = "white";
-  for (const s of stars) {
-    s.x += s.vx;
-    s.y += s.vy;
-
-    // wrap stars too
-    if (s.x < 0) s.x += 512;
-    if (s.x > 512) s.x -= 512;
-    if (s.y < 0) s.y += 512;
-    if (s.y > 512) s.y -= 512;
-
-    ctx.fillRect(s.x, s.y, 1, 1);
-  }
-}
-
-
-  function loop() {
-    ctx.clearRect(0, 0, 512, 512);
-    drawStars();
-    drawStar(); 
-    updateShip();
-    updateTorpedoes();
-    drawShip();
-    drawTorpedoes();
-    requestAnimationFrame(loop);
-  }
-    
-function applyGravity(obj) {
-  const dx = star.x - obj.x;
-  const dy = star.y - obj.y;
-  const distSq = dx * dx + dy * dy;
-
-  // prevent extreme forces
-  if (distSq < 50) return;
-
-  const force = star.mass / distSq;
-  const dist = Math.sqrt(distSq);
-
-  obj.vx += (dx / dist) * force;
-  obj.vy += (dy / dist) * force;
-}
-    
-function drawStar() {
-  ctx.beginPath();
-  ctx.arc(star.x, star.y, star.radius, 0, Math.PI * 2);
-  ctx.strokeStyle = "white";
-  ctx.stroke();
-}
-    
-function distance(a, b) {
-  return Math.hypot(a.x - b.x, a.y - b.y);
-}
-
-  loop();
-</script>
-
-</body>
-</html>
+  function distance(a, b) {
+    return Math.hypot(a.x - b.x
