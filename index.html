@@ -66,4 +66,90 @@ for (let i = 0; i < 5; i++) {
   asteroids.push({
     x: Math.random() * 512,
     y: Math.random() * 512,
-    vx: (Math.random() -
+    vx: (Math.random() - 0.5) * 1.2,
+    vy: (Math.random() - 0.5) * 1.2,
+    r: 18
+  });
+}
+
+/* ========= SAFE GRAVITY ========= */
+
+function gravity(o) {
+  const dx = star.x - o.x;
+  const dy = star.y - o.y;
+  const d = Math.hypot(dx, dy);
+
+  if (d < 40 || d > 400) return;
+
+  const force = 0.035;
+  o.vx += (dx / d) * force;
+  o.vy += (dy / d) * force;
+}
+
+/* ========= LOOP ========= */
+
+function loop() {
+  ctx.setTransform(1,0,0,1,0,0);
+
+  ctx.fillStyle = "black";
+  ctx.fillRect(0,0,512,512);
+
+  // HUD
+  ctx.fillStyle = "red";
+  ctx.font = "14px monospace";
+  ctx.fillText("Stable Physics", 10, 18);
+
+  /* ---- INPUT (simple thrust) ---- */
+  if (keys["ArrowUp"])    ship.vy -= 0.12;
+  if (keys["ArrowDown"])  ship.vy += 0.12;
+  if (keys["ArrowLeft"])  ship.vx -= 0.12;
+  if (keys["ArrowRight"]) ship.vx += 0.12;
+
+  /* ---- PHYSICS ---- */
+  gravity(ship);
+  ship.x += ship.vx;
+  ship.y += ship.vy;
+  wrap(ship);
+
+  for (const a of asteroids) {
+    gravity(a);
+    a.x += a.vx;
+    a.y += a.vy;
+    wrap(a);
+  }
+
+  // HARD FAIL GUARD
+  if (!ok(ship.x) || !ok(ship.y)) {
+    ctx.fillStyle = "yellow";
+    ctx.fillText("PHYSICS ERROR", 180, 260);
+    return;
+  }
+
+  /* ---- DRAW ---- */
+
+  // Star
+  ctx.fillStyle = "yellow";
+  ctx.beginPath();
+  ctx.arc(star.x, star.y, 20, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ship (cyan square)
+  ctx.fillStyle = "cyan";
+  ctx.fillRect(ship.x - 10, ship.y - 10, 20, 20);
+
+  // Asteroids
+  ctx.strokeStyle = "orange";
+  ctx.lineWidth = 3;
+  for (const a of asteroids) {
+    ctx.beginPath();
+    ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
