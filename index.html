@@ -1,74 +1,107 @@
-<script>
-  const canvas = document.getElementById("game");
-  const ctx = canvas.getContext("2d");
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Spacewar! (Public Domain Remake)</title>
 
-  /* ---------- GAME OBJECTS ---------- */
+  <style>
+    body {
+      margin: 0;
+      background: black;
+      color: white;
+      font-family: monospace;
+      text-align: center;
+    }
 
-  const ship = {
-    x: 256,
-    y: 256,
-    angle: 0,
-    vx: 0,
-    vy: 0
-  };
+    canvas {
+      display: block;
+      margin: 20px auto;
+      border: 2px solid white;
+      image-rendering: pixelated;
+    }
+  </style>
+</head>
 
-  const star = {
-    x: 256,
-    y: 256,
-    mass: 1200,
-    radius: 12
-  };
+<body>
+  <h1>SPACEWAR!</h1>
+  <p>← → rotate · ↑ thrust · space = fire</p>
 
-  const keys = {};
-  const torpedoes = [];
-  const explosions = [];
-  const stars = [];
+  <!-- THIS IS REQUIRED -->
+  <canvas id="game" width="512" height="512"></canvas>
 
-  let alive = true;
-  let respawnTimer = 0;
+  <!-- GAME CODE -->
+  <script>
+    const canvas = document.getElementById("game");
+    const ctx = canvas.getContext("2d");
 
-  /* ---------- STARFIELD ---------- */
+    const ship = { x:256, y:256, angle:0, vx:0, vy:0 };
+    const star = { x:256, y:256, mass:1200, radius:12 };
 
-  for (let i = 0; i < 100; i++) {
-    stars.push({
-      x: Math.random() * 512,
-      y: Math.random() * 512,
-      vx: (Math.random() - 0.5) * 0.15,
-      vy: (Math.random() - 0.5) * 0.15
+    const keys = {};
+    const torpedoes = [];
+    const explosions = [];
+    const stars = [];
+
+    let alive = true;
+    let respawnTimer = 0;
+
+    for (let i = 0; i < 100; i++) {
+      stars.push({
+        x: Math.random() * 512,
+        y: Math.random() * 512,
+        vx: (Math.random() - 0.5) * 0.15,
+        vy: (Math.random() - 0.5) * 0.15
+      });
+    }
+
+    document.addEventListener("keydown", e => {
+      keys[e.key] = true;
+      if (e.key === " ") fireTorpedo();
     });
-  }
 
-  /* ---------- INPUT ---------- */
+    document.addEventListener("keyup", e => keys[e.key] = false);
 
-  document.addEventListener("keydown", e => {
-    keys[e.key] = true;
-    if (e.key === " ") fireTorpedo();
-  });
+    function applyGravity(obj) {
+      const dx = star.x - obj.x;
+      const dy = star.y - obj.y;
+      const d2 = dx*dx + dy*dy;
+      if (d2 < 50) return;
+      const f = star.mass / d2;
+      const d = Math.sqrt(d2);
+      obj.vx += (dx/d) * f;
+      obj.vy += (dy/d) * f;
+    }
 
-  document.addEventListener("keyup", e => keys[e.key] = false);
+    function wrap(o) {
+      if (o.x < 0) o.x += 512;
+      if (o.x > 512) o.x -= 512;
+      if (o.y < 0) o.y += 512;
+      if (o.y > 512) o.y -= 512;
+    }
 
-  /* ---------- PHYSICS ---------- */
+    function fireTorpedo() {
+      if (!alive) return;
+      torpedoes.push({
+        x: ship.x,
+        y: ship.y,
+        vx: Math.cos(ship.angle)*4 + ship.vx,
+        vy: Math.sin(ship.angle)*4 + ship.vy,
+        life: 60
+      });
+    }
 
-  function applyGravity(obj) {
-    const dx = star.x - obj.x;
-    const dy = star.y - obj.y;
-    const distSq = dx * dx + dy * dy;
+    function explode(x,y) {
+      for (let i=0;i<20;i++) {
+        explosions.push({
+          x,y,
+          vx:(Math.random()-0.5)*4,
+          vy:(Math.random()-0.5)*4,
+          life:30
+        });
+      }
+    }
 
-    if (distSq < 50) return;
-
-    const force = star.mass / distSq;
-    const dist = Math.sqrt(distSq);
-
-    obj.vx += (dx / dist) * force;
-    obj.vy += (dy / dist) * force;
-  }
-
-  function wrap(obj) {
-    if (obj.x < 0) obj.x += 512;
-    if (obj.x > 512) obj.x -= 512;
-    if (obj.y < 0) obj.y += 512;
-    if (obj.y > 512) obj.y -= 512;
-  }
-
-  function distance(a, b) {
-    return Math.hypot(a.x - b.x
+    function updateShip() {
+      if (!alive) {
+        if (--respawnTimer <= 0) {
+          ship.x=100; ship.y=100;
