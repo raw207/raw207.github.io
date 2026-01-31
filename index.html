@@ -99,20 +99,22 @@
     if (obj.y > 512) obj.y -= 512;
   }
 
-  function drawShip() {
-    ctx.save();
-    ctx.translate(ship.x, ship.y);
-    ctx.rotate(ship.angle);
+ function drawShip() {
+  ctx.save();
+  ctx.translate(ship.x, ship.y);
+  ctx.rotate(ship.angle);
 
-    ctx.beginPath();
-    ctx.moveTo(10, 0);
-    ctx.lineTo(-8, -6);
-    ctx.lineTo(-8, 6);
-    ctx.closePath();
-    ctx.stroke();
+  ctx.strokeStyle = "white";   // 👈 FIX
+  ctx.beginPath();
+  ctx.moveTo(10, 0);
+  ctx.lineTo(-8, -6);
+  ctx.lineTo(-8, 6);
+  ctx.closePath();
+  ctx.stroke();
 
-    ctx.restore();
-  }
+  ctx.restore();
+}
+
 
   function drawTorpedoes() {
     for (const t of torpedoes) {
