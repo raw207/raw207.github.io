@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8">
-<title>Stable Gravity Game</title>
+<title>Stable 8-Bit Game Core</title>
 
 <style>
   body {
@@ -22,8 +22,8 @@
 </head>
 
 <body>
-<h1>Stable Gravity Game</h1>
-<p>Arrow keys: rotate & thrust</p>
+<h1>STABLE GAME CORE</h1>
+<p>Arrow keys to move</p>
 
 <canvas id="game" width="512" height="512"></canvas>
 
@@ -31,13 +31,13 @@
 const canvas = document.getElementById("game");
 const ctx = canvas.getContext("2d");
 
-/* ========== INPUT ========== */
+/* ===== INPUT ===== */
 
 const keys = {};
 addEventListener("keydown", e => keys[e.key] = true);
 addEventListener("keyup",   e => keys[e.key] = false);
 
-/* ========== HELPERS ========== */
+/* ===== HELPERS ===== */
 
 function wrap(o) {
   if (o.x < 0) o.x += 512;
@@ -46,11 +46,11 @@ function wrap(o) {
   if (o.y > 512) o.y -= 512;
 }
 
-function finite(n) {
+function ok(n) {
   return Number.isFinite(n);
 }
 
-/* ========== WORLD ========== */
+/* ===== WORLD ===== */
 
 const star = { x:256, y:256 };
 
@@ -58,8 +58,7 @@ const ship = {
   x: 120,
   y: 120,
   vx: 0,
-  vy: 0,
-  angle: 0
+  vy: 0
 };
 
 const asteroids = [];
@@ -73,7 +72,7 @@ for (let i = 0; i < 5; i++) {
   });
 }
 
-/* ========== SAFE GRAVITY ========== */
+/* ===== SAFE GRAVITY ===== */
 
 function gravity(o) {
   const dx = star.x - o.x;
@@ -83,4 +82,72 @@ function gravity(o) {
   if (d < 40 || d > 400) return;
 
   const force = 0.035;
-  o.vx += (dx / d
+  o.vx += (dx / d) * force;
+  o.vy += (dy / d) * force;
+}
+
+/* ===== LOOP ===== */
+
+function loop() {
+  ctx.setTransform(1,0,0,1,0,0);
+
+  ctx.fillStyle = "black";
+  ctx.fillRect(0,0,512,512);
+
+  ctx.fillStyle = "red";
+  ctx.font = "14px monospace";
+  ctx.fillText("STABLE CORE RUNNING", 10, 18);
+
+  /* INPUT */
+  if (keys["ArrowUp"])    ship.vy -= 0.12;
+  if (keys["ArrowDown"])  ship.vy += 0.12;
+  if (keys["ArrowLeft"])  ship.vx -= 0.12;
+  if (keys["ArrowRight"]) ship.vx += 0.12;
+
+  /* PHYSICS */
+  gravity(ship);
+  ship.x += ship.vx;
+  ship.y += ship.vy;
+  wrap(ship);
+
+  for (const a of asteroids) {
+    gravity(a);
+    a.x += a.vx;
+    a.y += a.vy;
+    wrap(a);
+  }
+
+  if (!ok(ship.x) || !ok(ship.y)) {
+    ctx.fillStyle = "yellow";
+    ctx.fillText("PHYSICS ERROR", 180, 260);
+    return;
+  }
+
+  /* DRAW */
+
+  // Star
+  ctx.fillStyle = "yellow";
+  ctx.beginPath();
+  ctx.arc(star.x, star.y, 20, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Ship
+  ctx.fillStyle = "cyan";
+  ctx.fillRect(ship.x - 10, ship.y - 10, 20, 20);
+
+  // Asteroids
+  ctx.strokeStyle = "orange";
+  ctx.lineWidth = 3;
+  for (const a of asteroids) {
+    ctx.beginPath();
+    ctx.arc(a.x, a.y, a.r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  requestAnimationFrame(loop);
+}
+
+loop();
+</script>
+</body>
+</html>
